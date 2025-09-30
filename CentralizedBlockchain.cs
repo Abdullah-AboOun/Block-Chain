@@ -24,7 +24,7 @@ public class Block
     public string CalculateHash()
     {
         string rawData = $"{Index}{Timestamp}{PreviousHash}{Data}{Nonce}";
-        
+
         using (SHA256 sha256 = SHA256.Create())
         {
             byte[] inputBytes = Encoding.ASCII.GetBytes(rawData);
@@ -42,7 +42,7 @@ public class Block
         {
             Nonce++;
             Hash = CalculateHash();
-        } 
+        }
         while (Hash == null || !Hash.StartsWith(target));
 
         Console.WriteLine($"Block {Index} Mined! Hash: {Hash}");
@@ -75,10 +75,10 @@ public class Blockchain
     public void AddBlock(Block newBlock)
     {
         newBlock.PreviousHash = GetLatestBlock().Hash;
-        
+
         Console.WriteLine($"\n--- Start Mining Block {newBlock.Index} ---");
         newBlock.MineBlock(Difficulty);
-        
+
         Chain.Add(newBlock);
     }
 
@@ -111,17 +111,17 @@ public class Program
     public static void Main(string[] args)
     {
         Console.WriteLine("--- Initializing My Central Blockchain (C#) ---");
-        
+
         Blockchain myChain = new Blockchain();
         Console.WriteLine($"Blockchain created. Difficulty: {myChain.Difficulty}\n");
         Console.WriteLine($"Genesis Block Hash: {myChain.Chain[0].Hash}\n");
 
         Block block1 = new Block(1, myChain.GetLatestBlock().Hash, "Transaction Data: Sender A to Receiver B, Amount 10 BTC");
         myChain.AddBlock(block1);
-        
+
         Block block2 = new Block(2, myChain.GetLatestBlock().Hash, "Transaction Data: Sender C to Receiver D, Amount 5 ETH");
         myChain.AddBlock(block2);
-        
+
         Block block3 = new Block(3, myChain.GetLatestBlock().Hash, "Transaction Data: Miner Reward, Amount 0.5 ZEC");
         myChain.AddBlock(block3);
 
@@ -129,19 +129,19 @@ public class Program
         myChain.IsChainValid();
 
         Console.WriteLine("\n\n--- TAMPERING WITH BLOCK 2 DATA ---");
-        
+
         Block tamperedBlock = myChain.Chain[2];
         tamperedBlock.Data = "Transaction Data: SENDER HACKER to TARGET, Amount 1000 BTC (FRAUDULENT)";
-        
+
         Console.WriteLine($"Block 2 Data changed. Original Hash: {tamperedBlock.Hash}");
         Console.WriteLine($"Block 2 New Calculated Hash: {tamperedBlock.CalculateHash()}");
-        
+
         Console.WriteLine("\n--- Re-Testing Chain Integrity After Tampering ---");
         myChain.IsChainValid();
-        
+
         Console.WriteLine("\n--- Attacker Tries to Re-Mine Block 2 ---");
         tamperedBlock.MineBlock(myChain.Difficulty);
-        
+
         Console.WriteLine("\n--- Re-Testing Chain Integrity After Re-Mining Block 2 ---");
         myChain.IsChainValid();
     }

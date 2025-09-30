@@ -7,7 +7,7 @@ using System.Text.Json;
 
 public class Transaction
 {
-    public string Sender { get; set; } 
+    public string Sender { get; set; }
     public string Recipient { get; set; }
     public double Amount { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.Now;
@@ -36,7 +36,7 @@ public class Block
     {
         string transactionsJson = JsonSerializer.Serialize(Transactions);
         string rawData = $"{Index}{Timestamp}{PreviousHash}{transactionsJson}{Nonce}";
-        
+
         using (SHA256 sha256 = SHA256.Create())
         {
             byte[] inputBytes = Encoding.ASCII.GetBytes(rawData);
@@ -54,7 +54,7 @@ public class Block
         {
             Nonce++;
             Hash = CalculateHash();
-        } 
+        }
         while (Hash == null || !Hash.StartsWith(target));
 
         Console.WriteLine($"Block {Index} Mined! Hash: {Hash.Substring(0, 10)}...");
@@ -67,8 +67,8 @@ public class Blockchain
     public int Difficulty { get; set; } = 4;
     public List<Transaction> CurrentTransactions { get; set; } = new List<Transaction>();
     public double MiningReward { get; } = 50.0;
-    
-    public string NodeId { get; private set; } 
+
+    public string NodeId { get; private set; }
 
     public Blockchain(string nodeId)
     {
@@ -88,7 +88,7 @@ public class Blockchain
     {
         return Chain[Chain.Count - 1];
     }
-    
+
     public void NewTransaction(string sender, string recipient, double amount)
     {
         var transaction = new Transaction
@@ -104,16 +104,16 @@ public class Blockchain
     public Block MinePendingTransactions(string minerAddress)
     {
         NewTransaction("Blockchain System", minerAddress, MiningReward);
-        
+
         Block newBlock = new Block(Chain.Count, GetLatestBlock().Hash, CurrentTransactions);
-        
+
         Console.WriteLine($"\n[Node {NodeId}] --- Starting Mining for Block {newBlock.Index} ({CurrentTransactions.Count} transactions) ---");
-        
+
         newBlock.MineBlock(Difficulty);
-        
+
         Chain.Add(newBlock);
         CurrentTransactions = new List<Transaction>();
-        
+
         Console.WriteLine($"[Node {NodeId}] Block {newBlock.Index} successfully added.");
         return newBlock;
     }
@@ -136,17 +136,17 @@ public class Blockchain
                 Console.WriteLine($"[Node {NodeId}] Validation Failed: Block {currentBlock.Index} PreviousHash is corrupted.");
                 return false;
             }
-            
+
             string target = new string('0', Difficulty);
             if (!currentBlock.Hash.StartsWith(target))
             {
-                 Console.WriteLine($"[Node {NodeId}] Validation Failed: Block {currentBlock.Index} did not meet Proof-of-Work requirement.");
-                 return false;
+                Console.WriteLine($"[Node {NodeId}] Validation Failed: Block {currentBlock.Index} did not meet Proof-of-Work requirement.");
+                return false;
             }
         }
         return true;
     }
-    
+
     public bool ResolveConflicts(List<Blockchain> peerChains)
     {
         Blockchain longestValidChain = this;
@@ -158,7 +158,7 @@ public class Blockchain
         foreach (var peer in peerChains.Where(p => p.NodeId != NodeId))
         {
             Console.WriteLine($"[Node {NodeId}] Checking Peer {peer.NodeId} (Length: {peer.Chain.Count})...");
-            
+
             if (peer.Chain.Count > maxLength && peer.IsChainValid())
             {
                 maxLength = peer.Chain.Count;
@@ -173,7 +173,7 @@ public class Blockchain
             Console.WriteLine($"[Node {NodeId}] *** CHAIN REPLACED by Node {longestValidChain.NodeId}'s chain (New Length: {maxLength}). ***");
             return true;
         }
-        
+
         Console.WriteLine($"[Node {NodeId}] *** Current chain is the longest/authoritative. ***");
         return false;
     }
@@ -184,11 +184,11 @@ public class Program
     public static void Main(string[] args)
     {
         Console.WriteLine("--- Initializing Decentralized Blockchain Simulation (C#) ---");
-        
+
         Blockchain nodeA = new Blockchain("Node-A");
         Blockchain nodeB = new Blockchain("Node-B");
         Blockchain nodeC = new Blockchain("Node-C");
-        
+
         List<Blockchain> networkPeers = new List<Blockchain> { nodeA, nodeB, nodeC };
 
         Console.WriteLine("\n\n=============== ROUND 1: Node A Mines ===============");
@@ -198,25 +198,25 @@ public class Program
 
         nodeB.NewTransaction("Alice", "Bob", 10.5);
         nodeB.NewTransaction("Bob", "Charlie", 2.0);
-        
+
         Console.WriteLine("\n\n=============== ROUND 2: Node C Mines ===============");
         nodeC.NewTransaction("Dave", "Eve", 50.0);
         nodeC.MinePendingTransactions("Miner-C");
 
         Console.WriteLine("\n\n=============== ROUND 3: Consensus Check (Node B Syncs) ===============");
-        
+
         List<Blockchain> nodeBPossibleChains = new List<Blockchain> { nodeA, nodeB, nodeC };
-        nodeB.ResolveConflicts(nodeBPossibleChains); 
+        nodeB.ResolveConflicts(nodeBPossibleChains);
 
         Console.WriteLine("\n\n=============== ROUND 4: Node B Mines and creates the longest chain ===============");
         nodeB.NewTransaction("Charlie", "Alice", 3.0);
         nodeB.MinePendingTransactions("Miner-B");
 
         Console.WriteLine("\n\n=============== ROUND 5: Consensus Check (Node A Syncs) ===============");
-        
+
         List<Blockchain> currentNetworkState = new List<Blockchain> { nodeA, nodeB, nodeC };
         nodeA.ResolveConflicts(currentNetworkState);
-        
+
         Console.WriteLine($"\n[Final Status] Node A Length: {nodeA.Chain.Count}, Node B Length: {nodeB.Chain.Count}, Node C Length: {nodeC.Chain.Count}");
     }
 }
